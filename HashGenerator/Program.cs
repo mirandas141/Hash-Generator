@@ -50,6 +50,9 @@ namespace HashGenerator
         [Option(Description = "Output files as relative paths")]
         public bool RelativePaths { get; set; }
 
+        [Option(Description = "Does not output results to the console")]
+        public bool Silent { get; set; }
+
         private static IServiceProvider ConfigureServices()
         {
             var services = new ServiceCollection();
@@ -85,10 +88,11 @@ namespace HashGenerator
             var generator = new HashGenerator(hasher);
             generator.RelativePaths = RelativePaths;
 
-            var writers = new List<IOutputTextWriter>
+            var writers = new List<IOutputTextWriter>();
+            if (!Silent)
             {
-                new ConsoleWriter(_console)
-            };
+                writers.Add(new ConsoleWriter(_console));
+            }
             if (!string.IsNullOrWhiteSpace(Target))
             {
                 if (Target.Equals(".", StringComparison.InvariantCultureIgnoreCase))
