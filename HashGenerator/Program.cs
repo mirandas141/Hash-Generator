@@ -44,8 +44,11 @@ namespace HashGenerator
         public string HashType { get; set; } = "sha256";
 
         [Option(Description = "Target file to write hashes too\n" +
-            "Note: Files only displayed to console if ommitted")]
+            "specifying '.' will result in using the specified [file|directory].hashType as file name")]
         public string Target { get; set; }
+
+        [Option(Description = "Output files as relative paths")]
+        public bool RelativePaths { get; set; }
 
         private static IServiceProvider ConfigureServices()
         {
@@ -80,12 +83,21 @@ namespace HashGenerator
             };
 
             var generator = new HashGenerator(hasher);
+            generator.RelativePaths = RelativePaths;
+
             var writers = new List<IOutputTextWriter>
             {
                 new ConsoleWriter(_console)
             };
             if (!string.IsNullOrWhiteSpace(Target))
-                writers.Add(new FileWriter(Target));
+            {
+                if (Target.Equals(".", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    Target = $"{Source}.{HashType}";
+                }
+                var file = new FileWriter(Target);
+                writers.Add(file);
+            }
 
             IOutput output = new TextOutput(writers);
             var app = new Application(generator, _console, output);

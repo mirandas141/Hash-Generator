@@ -10,24 +10,25 @@ namespace HashGenerator
     public class HashGenerator : IHashGenerator
     {
         private readonly HashAlgorithm _hasher;
+        private string _pathToTrim = "";
 
         public HashGenerator(HashAlgorithm hasher)
         {
             _hasher = hasher;
         }
 
+        public bool RelativePaths { get; set; }
+
         public async Task<List<HashPair>> FromDirectoryAsync(string directory)
         {
+            if (RelativePaths)
+                _pathToTrim = Directory.GetParent(directory).FullName;
+
             var result = new List<HashPair>();
-            result.AddRange(await ComputeFromDirecotryRecursiveAsync(directory));
+            result.AddRange(await ComputeFromDirecotryRecursiveAsync(new DirectoryInfo(directory)));
             result.Add(CreateCombinedHash(result));
 
             return result;
-        }
-
-        private async Task<List<HashPair>> ComputeFromDirecotryRecursiveAsync(string directory)
-        {
-            return await ComputeFromDirecotryRecursiveAsync(new DirectoryInfo(directory));
         }
 
         private async Task<List<HashPair>> ComputeFromDirecotryRecursiveAsync(DirectoryInfo directory)
@@ -37,7 +38,7 @@ namespace HashGenerator
 
             foreach (var file in files)
             {
-                result.Add(await FromFileAsync(file.FullName));
+                result.Add(await ComputerFromFileAsync(file.FullName));
             }
 
             foreach (var dir in directory.GetDirectories())
@@ -48,12 +49,21 @@ namespace HashGenerator
             return result;
         }
 
-        public async Task<HashPair> FromFileAsync(string file)
+        private async Task<HashPair> ComputerFromFileAsync(string file)
         {
             var bytes = await File.ReadAllBytesAsync(file);
             var hash = _hasher.ComputeHash(bytes);
             var result = HashToString(hash);
+            if (RelativePaths) file = file.Replace(_pathToTrim, "");
             return new HashPair(file, result);
+        }
+
+        public async Task<HashPair> FromFileAsync(string file)
+        {
+            if (RelativePaths) 
+                _pathToTrim = Directory.GetParent(file).FullName;
+
+            return await ComputerFromFileAsync(file);
         }
 
         private string HashToString(byte[] hash)
