@@ -4,7 +4,6 @@ using Microsoft.Extensions.Hosting;
 using System;
 using System.Dynamic;
 using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
 namespace HashGenerator
@@ -26,8 +25,8 @@ namespace HashGenerator
             await app.ExecuteAsync(args);
         }
 
-        [Argument(0, nameof(Target), "The target file or directory to generate the hash(s) from")]
-        public string Target { get; private set; }
+        [Argument(0, nameof(Source), "The target file or directory to generate the hash(s) from")]
+        public string Source { get; private set; }
 
         [Option(Description = "Used to specify the type of hash to generate" +
             "\nDefault: SHA256" +
@@ -41,41 +40,28 @@ namespace HashGenerator
 
         private static IServiceCollection ConfigureServices(IServiceCollection services)
         {
-            return services.AddSingleton(x => new Application())
-                .AddSingleton<IConsole>(PhysicalConsole.Singleton);
+            return services.AddSingleton<IConsole>(PhysicalConsole.Singleton)
+                .AddScoped<IHashGenerator, HashGenerator>();
         }
 
-        private async Task OnExecuteAsync(IConsole console)
+        private async Task OnExecuteAsync()
         {
-            while (string.IsNullOrWhiteSpace(Target))
+            while (string.IsNullOrWhiteSpace(Source))
             {
-                Target = Prompt.GetString("Please enter the path: ").Trim();
+                Source = Prompt.GetString("Please enter the path: ").Trim();
             }
 
-            HashAlgorithm hasher;
-            switch (HashType.ToLowerInvariant().Trim())
+            using HashAlgorithm hasher = (HashType.ToLowerInvariant().Trim()) switch
             {
-                case "sha256":
-                default:
-                    hasher = SHA256.Create();
-                    break;
-                case "sha384":
-                    hasher = SHA384.Create();
-                    break;
-                case "sha512":
-                    hasher = SHA512.Create();
-                    break;
-                case "md5":
-                    hasher = MD5.Create();
-                    break;
-                case "sha1":
-                    hasher = SHA1.Create();
-                    break;
-                    
-            }
+                "sha384" => SHA384.Create(),
+                "sha512" => SHA512.Create(),
+                "md5" => MD5.Create(),
+                "sha1" => SHA1.Create(),
+                _ => SHA256.Create(),
+            };
 
             var app = new Application();
-            await app.RunAsync(Target, hasher);
+            await app.RunAsync(Source, hasher);
         }
     }
 }
