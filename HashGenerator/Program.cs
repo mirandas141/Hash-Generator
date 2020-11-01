@@ -1,45 +1,47 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System.IO;
+using System;
+using System.Dynamic;
+using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 
 namespace HashGenerator
 {
+    [Command(Name = "HashGenerator", Description = "A simple utility to generate hashes from a file or directory of files")]
+    [HelpOption("-?")]
     class Program
     {
-        static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            var configuration = BuildConfiguration();
+            var services = ConfigureServices(new ServiceCollection())
+                .BuildServiceProvider();
 
-            var host = CreateDefaultHost();
+            var app = new CommandLineApplication<Program>();
+            app.Conventions
+                .UseDefaultConventions()
+                .UseConstructorInjection(services);    
 
-            var app = host.Services.GetService<Application>();
-
-            app.Run();
+            await app.ExecuteAsync(args);
         }
 
-        private static IConfigurationRoot BuildConfiguration()
+        [Argument(0, nameof(Target), "The target file or directory to generate the hash(s) from")]
+        public string Target { get; private set; }
+
+        private static IServiceCollection ConfigureServices(IServiceCollection services)
         {
-            return new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                .AddEnvironmentVariables()
-                .Build();
+            return services.AddSingleton(x => new Application())
+                .AddSingleton<IConsole>(PhysicalConsole.Singleton);
         }
 
-        private static IHost CreateDefaultHost()
+        private async Task OnExecuteAsync(IConsole console)
         {
-            return Host.CreateDefaultBuilder()
-                .ConfigureServices((context, services) =>
-                {
-                    ConfigureServices(services);
-                })
-                .Build();
-        }
-
-        private static void ConfigureServices(IServiceCollection services)
-        {
-            services.AddScoped(x => new Application());
+            while (string.IsNullOrWhiteSpace(Target))
+            {
+                Target = Prompt.GetString("Please enter the path: ").Trim();
+            }
+            var app = new Application();
+            await app.RunAsync(Target);
         }
     }
 }
