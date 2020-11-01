@@ -1,8 +1,8 @@
-﻿using McMaster.Extensions.CommandLineUtils;
+﻿using HashGenerator.DataAccess;
+using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using System;
-using System.Dynamic;
+using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 
@@ -12,36 +12,55 @@ namespace HashGenerator
     [HelpOption("-?|--help")]
     class Program
     {
+        private static IServiceProvider _serviceProvider;
+        private readonly IConsole _console;
+
         public static async Task Main(string[] args)
         {
-            var services = ConfigureServices(new ServiceCollection())
-                .BuildServiceProvider();
+            _serviceProvider = ConfigureServices();
+                //.BuildServiceProvider();
 
             var app = new CommandLineApplication<Program>();
             app.Conventions
                 .UseDefaultConventions()
-                .UseConstructorInjection(services);
+                .UseConstructorInjection(_serviceProvider);
 
             await app.ExecuteAsync(args);
         }
 
+        //private ServiceProvider _provider { get; set; }
+
         [Argument(0, nameof(Source), "The target file or directory to generate the hash(s) from")]
         public string Source { get; private set; }
 
-        [Option(Description = "Used to specify the type of hash to generate" +
-            "\nDefault: SHA256" +
-            "\nValues: MD5 | SHA1 | SHA256 | SHA384 | SHA512" +
-            "\nNote: MD5 and SHA1 are weaker hashing algorithms and not recommended.")]
+        [Option(Description = "Used to specify the type of hash to generate\n" +
+            "Default: SHA256\n" +
+            "Values: MD5 | SHA1 | SHA256 | SHA384 | SHA512\n" +
+            "Note: MD5 and SHA1 are weaker hashing algorithms and not recommended.")]
         [AllowedValues("sha256", "sha384", "sha512", "md5", "sha1",
             IgnoreCase = true, 
             Comparer = StringComparison.InvariantCultureIgnoreCase, 
             ErrorMessage = "Supported types are ")]
         public string HashType { get; set; } = "sha256";
 
-        private static IServiceCollection ConfigureServices(IServiceCollection services)
+        [Option(Description = "Target file to write hashes too\n" +
+            "Note: Files only displayed to console if ommitted")]
+        public string Target { get; set; }
+
+        private static IServiceProvider ConfigureServices()
         {
-            return services.AddSingleton<IConsole>(PhysicalConsole.Singleton)
-                .AddScoped<IHashGenerator, HashGenerator>();
+            var services = new ServiceCollection();
+            services.AddSingleton(PhysicalConsole.Singleton);
+            services.AddScoped<IHashGenerator, HashGenerator>();
+            services.AddScoped<IOutput, TextOutput>();
+            services.AddTransient<FileWriter>();
+            services.AddTransient<ConsoleWriter>();
+            return services.BuildServiceProvider();
+        }
+
+        public Program(IConsole console)
+        {
+            _console = console;
         }
 
         private async Task OnExecuteAsync()
@@ -57,11 +76,20 @@ namespace HashGenerator
                 "sha512" => SHA512.Create(),
                 "md5" => MD5.Create(),
                 "sha1" => SHA1.Create(),
-                _ => SHA256.Create(),
+                _ => SHA256.Create()
             };
 
-            var app = new Application();
-            await app.RunAsync(Source, hasher);
+            var generator = new HashGenerator(hasher);
+            var writers = new List<IOutputTextWriter>
+            {
+                new ConsoleWriter(_console)
+            };
+            if (!string.IsNullOrWhiteSpace(Target))
+                writers.Add(new FileWriter(Target));
+
+            IOutput output = new TextOutput(writers);
+            var app = new Application(generator, _console, output);
+            await app.RunAsync(Source);
         }
     }
 }
