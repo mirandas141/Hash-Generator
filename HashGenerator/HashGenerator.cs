@@ -21,8 +21,7 @@ namespace HashGenerator
 
         public async Task<List<HashPair>> FromDirectoryAsync(string directory)
         {
-            if (RelativePaths)
-                _pathToTrim = Directory.GetParent(directory).FullName;
+            SetPathToTrim(directory);
 
             var result = new List<HashPair>();
             result.AddRange(await ComputeFromDirecotryRecursiveAsync(new DirectoryInfo(directory)));
@@ -54,16 +53,21 @@ namespace HashGenerator
             var bytes = await File.ReadAllBytesAsync(file);
             var hash = _hasher.ComputeHash(bytes);
             var result = HashToString(hash);
-            if (RelativePaths) file = file.Replace(_pathToTrim, "");
+            file = file.Replace(_pathToTrim, "");
             return new HashPair(file, result);
         }
 
         public async Task<HashPair> FromFileAsync(string file)
         {
-            if (RelativePaths) 
-                _pathToTrim = Directory.GetParent(file).FullName;
+            SetPathToTrim(file);
 
             return await ComputerFromFileAsync(file);
+        }
+
+        private void SetPathToTrim(string file)
+        {
+            if (RelativePaths)
+                _pathToTrim = Directory.GetParent(file).FullName + Path.DirectorySeparatorChar;
         }
 
         private string HashToString(byte[] hash)
