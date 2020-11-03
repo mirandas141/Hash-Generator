@@ -22,7 +22,9 @@ namespace HashGenerator
             _console = console;
         }
 
+#pragma warning disable IDE0051 // Remove unused private members
         private async Task OnExecuteAsync()
+#pragma warning restore IDE0051 // Remove unused private members
         {
             while (string.IsNullOrWhiteSpace(Source))
             {
@@ -74,7 +76,9 @@ namespace HashGenerator
             };
         }
 
+#pragma warning disable IDE0051 // Remove unused private members
         private string GetVersion()
+#pragma warning restore IDE0051 // Remove unused private members
             => typeof(Startup)
             .Assembly?
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
