@@ -29,6 +29,8 @@ namespace HashGenerator
         private async Task<List<HashPair>> ComputeHashes(string source)
         {
             var hashes = new List<HashPair>();
+            source = source.Replace("\"", "").Replace("\'", "");
+
             if (File.Exists(source))
             {
                 hashes.Add(await _hashGenerator.FromFileAsync(source));
