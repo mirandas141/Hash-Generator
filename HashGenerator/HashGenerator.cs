@@ -19,12 +19,12 @@ namespace HashGenerator
 
         public bool RelativePaths { get; set; }
 
-        public async Task<List<HashPair>> FromDirectoryAsync(string directory)
+        public async Task<List<HashPair>> FromDirectoryAsync(string directory, string pattern = "*")
         {
             SetPathToTrim(directory);
 
             var result = new List<HashPair>();
-            result.AddRange(await ComputeFromDirecotryRecursiveAsync(new DirectoryInfo(directory)));
+            result.AddRange(await ComputeFromDirecotryRecursiveAsync(new DirectoryInfo(directory), pattern));
 
             if (result.Count > 1)
                 result.Add(CreateCombinedHash(result));
@@ -32,9 +32,9 @@ namespace HashGenerator
             return result;
         }
 
-        private async Task<List<HashPair>> ComputeFromDirecotryRecursiveAsync(DirectoryInfo directory)
+        private async Task<List<HashPair>> ComputeFromDirecotryRecursiveAsync(DirectoryInfo directory, string pattern = "*")
         {
-            var files = directory.GetFiles().OrderBy(x => x.FullName);
+            var files = directory.GetFiles(pattern).OrderBy(x => x.FullName);
             var result = new List<HashPair>();
 
             foreach (var file in files)
@@ -44,7 +44,7 @@ namespace HashGenerator
 
             foreach (var dir in directory.GetDirectories())
             {
-                result.AddRange(await ComputeFromDirecotryRecursiveAsync(dir));
+                result.AddRange(await ComputeFromDirecotryRecursiveAsync(dir, pattern));
             }
 
             return result;

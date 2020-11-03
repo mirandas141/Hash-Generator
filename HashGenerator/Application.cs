@@ -39,6 +39,21 @@ namespace HashGenerator
             {
                 hashes.AddRange(await _hashGenerator.FromDirectoryAsync(source));
             }
+            else if (source.Contains("*") || source.Contains("?"))
+            {
+                if (source.Contains(Path.DirectorySeparatorChar))
+                {
+                    var dir = Path.GetDirectoryName(source);
+                    var pattern = source
+                        .Replace(dir, string.Empty)
+                        .Replace(Path.DirectorySeparatorChar.ToString(), string.Empty);
+                    hashes.AddRange(await _hashGenerator.FromDirectoryAsync(dir, pattern));
+                }
+                else
+                {
+                    hashes.AddRange(await _hashGenerator.FromDirectoryAsync(Directory.GetCurrentDirectory(), source));
+                }
+            }
             else
             {
                 _console.WriteLine("Source not found");
