@@ -25,7 +25,9 @@ namespace HashGenerator
 
             var result = new List<HashPair>();
             result.AddRange(await ComputeFromDirecotryRecursiveAsync(new DirectoryInfo(directory)));
-            result.Add(CreateCombinedHash(result));
+
+            if (result.Count > 1)
+                result.Add(CreateCombinedHash(result));
 
             return result;
         }
