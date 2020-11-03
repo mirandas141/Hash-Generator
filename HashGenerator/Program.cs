@@ -1,5 +1,4 @@
-﻿using HashGenerator.DataAccess;
-using McMaster.Extensions.CommandLineUtils;
+﻿using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
@@ -11,12 +10,20 @@ namespace HashGenerator
     {
         public static async Task Main(string[] args)
         {
-            await Host.CreateDefaultBuilder()
-                .ConfigureServices((context, services) =>
-                {
-                    ConfigureServices(services);
-                })
-                .RunCommandLineApplicationAsync<Startup>(args);
+            try
+            {
+                await Host.CreateDefaultBuilder()
+                    .ConfigureServices((context, services) =>
+                    {
+                        ConfigureServices(services);
+                    })
+                    .RunCommandLineApplicationAsync<Startup>(args);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                Console.ReadKey();
+            }
         }
 
         private static void ConfigureServices(IServiceCollection services)
