@@ -27,10 +27,9 @@ public class Startup
 
         var generator = HashGenerator.Create(HashType)
             .UseRelativePaths(!FullPaths);
-        var writers = GetWritters();
 
-        IOutput output = new TextOutput(writers);
-        var app = new Application(generator, _console, output);
+        var output = new TextOutput(GetWritters());
+        var app = new Application(generator, output);
         await app.RunAsync(Source);
 
         if (PauseOnCompletion)

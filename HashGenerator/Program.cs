@@ -6,7 +6,7 @@ namespace HashGenerator;
 
 class Program
 {
-    public static async Task Main(string[] args)
+    public static async Task<int> Main(string[] args)
     {
         try
         {
@@ -16,10 +16,22 @@ class Program
                     ConfigureServices(services);
                 })
                 .RunCommandLineApplicationAsync<Startup>(args);
+            return (int)ExitCode.Ok;
         }
-        catch (Exception e)
+        catch (SourceNotFoundException ex)
         {
-            Console.WriteLine(e.Message);
+            Console.WriteLine(ex.Message);
+            return (int)ExitCode.SourceNotFound;
+        }
+        catch (CommandParsingException ex)
+        {
+            return (int)ExitCode.InvalidParameter;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            Console.WriteLine(ex.GetType());
+            return (int)ExitCode.UndefinedError;
         }
     }
 

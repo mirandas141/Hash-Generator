@@ -1,17 +1,13 @@
-﻿using McMaster.Extensions.CommandLineUtils;
-
-namespace HashGenerator;
+﻿namespace HashGenerator;
 
 public class Application
 {
     private readonly IHashGenerator _hashGenerator;
-    private readonly IConsole _console;
     private readonly IOutput _output;
 
-    public Application(IHashGenerator hashGenerator, IConsole console, IOutput output)
+    public Application(IHashGenerator hashGenerator, IOutput output)
     {
         _hashGenerator = hashGenerator;
-        _console = console;
         _output = output;
     }
 
@@ -52,8 +48,7 @@ public class Application
         }
         else
         {
-            _console.WriteLine("Source not found");
-            Environment.Exit(-1);
+            throw new SourceNotFoundException(source);
         }
         return hashes;
     }
