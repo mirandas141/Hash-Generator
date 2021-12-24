@@ -1,10 +1,6 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿namespace HashGenerator;
 
-namespace HashGenerator
+public interface IOutput
 {
-    public interface IOutput
-    {
-        Task Write(List<HashPair> hashes);
-    }
+    Task Write(List<HashPair> hashes);
 }

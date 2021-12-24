@@ -1,20 +1,19 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
-using System.Threading.Tasks;
 
-namespace HashGenerator.DataAccess
+namespace HashGenerator.DataAccess;
+
+public class ConsoleWriter : IOutputTextWriter
 {
-    public class ConsoleWriter : IOutputTextWriter
+    private readonly IConsole _console;
+
+    public ConsoleWriter(IConsole console)
     {
-        private readonly IConsole _console;
+        _console = console;
+    }
 
-        public ConsoleWriter(IConsole console)
-        {
-            _console = console;
-        }
-
-        public async Task Write(string output)
-        {
-            _console.Write(output);
-        }
+    public Task Write(string output)
+    {
+        _console.Write(output);
+        return Task.CompletedTask;
     }
 }

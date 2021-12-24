@@ -1,14 +1,3 @@
-﻿namespace HashGenerator
-{
-    public struct HashPair
-    {
-        public HashPair(string name, string hash)
-        {
-            Name = name;
-            Hash = hash;
-        }
+﻿namespace HashGenerator;
 
-        public string Name { get; }
-        public string Hash { get; }
-    }
-}
+public readonly record struct HashPair(string Name, string Hash);
