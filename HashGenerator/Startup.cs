@@ -11,7 +11,7 @@ namespace HashGenerator
         FullName = "Hash Generator",
         Description = "A simple utility to generate hashes from a file or directory of files")]
     [VersionOptionFromMember(MemberName = "GetVersion")]
-    [HelpOption]
+    [HelpOption(ShortName = "")] //Hide the default -h parameter as it conflicts with HashType (-h) below
     public class Startup
     {
         private readonly IConsole _console;
