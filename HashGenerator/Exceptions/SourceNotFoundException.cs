@@ -10,3 +10,15 @@ internal class SourceNotFoundException : Exception
       System.Runtime.Serialization.SerializationInfo info,
       System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
 }
+
+
+[Serializable]
+public class NoOutputEnabledException : Exception
+{
+    public NoOutputEnabledException() 
+        : base("Can not silence console output without specifying target") { }
+
+    protected NoOutputEnabledException(
+      System.Runtime.Serialization.SerializationInfo info,
+      System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
+}

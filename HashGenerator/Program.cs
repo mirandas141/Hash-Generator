@@ -20,20 +20,24 @@ class Program
         }
         catch (SourceNotFoundException ex)
         {
-            Console.WriteLine(ex.Message);
+            WriteMessgage(ex.Message);
             return (int)ExitCode.SourceNotFound;
         }
-        catch (CommandParsingException ex)
+        catch (Exception ex) when 
+            (ex is CommandParsingException 
+            || ex is NoOutputEnabledException)
         {
+            WriteMessgage(ex.Message);
             return (int)ExitCode.InvalidParameter;
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
-            Console.WriteLine(ex.GetType());
+            WriteMessgage(ex.Message);
             return (int)ExitCode.UndefinedError;
         }
     }
+
+    private static void WriteMessgage(string message) => Console.WriteLine(message);
 
     private static void ConfigureServices(IServiceCollection services)
     {

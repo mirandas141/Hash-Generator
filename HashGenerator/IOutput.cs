@@ -1,6 +1,6 @@
 ﻿namespace HashGenerator;
 
-public interface IOutput
+internal interface IOutput
 {
-    Task Write(List<HashPair> hashes);
+    Task Write(HashPair pair);
 }

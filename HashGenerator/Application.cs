@@ -5,7 +5,7 @@ public class Application
     private readonly IHashGenerator _hashGenerator;
     private readonly IOutput _output;
 
-    public Application(IHashGenerator hashGenerator, IOutput output)
+    internal Application(IHashGenerator hashGenerator, IOutput output)
     {
         _hashGenerator = hashGenerator;
         _output = output;
@@ -13,48 +13,47 @@ public class Application
 
     public async Task RunAsync(string source)
     {
-        var hashes = await ComputeHashes(source);
+        var files = await LocatesFiles(source);
+        if (files.Count == 0) ThrowSourceNotFoundException(source);
 
-        OutputResults(hashes);
+        await ComputeAndWriteHashes(files);
     }
 
-    private async Task<List<HashPair>> ComputeHashes(string source)
+    private static void ThrowSourceNotFoundException(string source)
     {
-        var hashes = new List<HashPair>();
-        source = source.Replace("\"", "").Replace("\'", "");
+        throw new SourceNotFoundException(source);
+    }
 
+    private async Task<List<string>> LocatesFiles(string source)
+    {
+        var files = new List<string>();
         if (File.Exists(source))
         {
-            hashes.Add(await _hashGenerator.FromFileAsync(source));
+            files.Add(source);
         }
         else if (Directory.Exists(source))
         {
-            hashes.AddRange(await _hashGenerator.FromDirectoryAsync(source));
-        }
-        else if (source.Contains("*") || source.Contains("?"))
-        {
-            if (source.Contains(Path.DirectorySeparatorChar))
+            files.AddRange(Directory.GetFiles(source));
+            foreach (var dir in Directory.GetDirectories(source))
             {
-                var dir = Path.GetDirectoryName(source);
-                var pattern = source
-                    .Replace(dir, string.Empty)
-                    .Replace(Path.DirectorySeparatorChar.ToString(), string.Empty);
-                hashes.AddRange(await _hashGenerator.FromDirectoryAsync(dir, pattern));
-            }
-            else
-            {
-                hashes.AddRange(await _hashGenerator.FromDirectoryAsync(Directory.GetCurrentDirectory(), source));
+                files.AddRange(await LocatesFiles(dir));
             }
         }
-        else
-        {
-            throw new SourceNotFoundException(source);
-        }
-        return hashes;
+
+        return files;
     }
 
-    private void OutputResults(List<HashPair> hashes)
+    private async Task ComputeAndWriteHashes(List<string> files)
     {
-        _output.Write(hashes);
+        foreach (var file in files)
+        {
+            var hash = await _hashGenerator.FromFileAsync(file);
+            await OutputResult(new HashPair(file, hash));
+        }
+    }
+
+    private async Task OutputResult(HashPair pair)
+    {
+        await _output.Write(pair);
     }
 }

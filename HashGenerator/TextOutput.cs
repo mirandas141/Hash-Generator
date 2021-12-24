@@ -1,33 +1,31 @@
 ﻿using HashGenerator.DataAccess;
+using HashGenerator.Models;
 
 namespace HashGenerator;
 
-public class TextOutput : IOutput
+internal class TextOutput : IOutput
 {
     private readonly List<IOutputTextWriter> _writers = new List<IOutputTextWriter>();
+    private readonly INameFormatter _nameFormatter;
 
-    public TextOutput(IOutputTextWriter writer)
+    internal TextOutput(IOutputTextWriter writer, INameFormatter nameFormatter)
     {
         _writers.Add(writer);
+        _nameFormatter = nameFormatter;
     }
 
-    public TextOutput(List<IOutputTextWriter> writers)
+    public TextOutput(List<IOutputTextWriter> writers, INameFormatter nameFormatter)
     {
         _writers.AddRange(writers);
+        _nameFormatter = nameFormatter;
     }
 
-    public async Task Write(List<HashPair> hashes)
+    public async Task Write(HashPair pair)
     {
-        var output = new StringBuilder();
-
-        foreach (var hash in hashes)
-        {
-            output.AppendLine($"{hash.Name} => {hash.Hash}");
-        }
-
         foreach (var writer in _writers)
         {
-            await writer.Write(output.ToString());
+            var name = _nameFormatter.Format(pair.Name);
+            await writer.WriteLineAsync($"{name} => {pair.Hash}");
         }
     }
 }

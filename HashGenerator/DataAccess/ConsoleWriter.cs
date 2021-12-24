@@ -11,9 +11,9 @@ public class ConsoleWriter : IOutputTextWriter
         _console = console;
     }
 
-    public Task Write(string output)
+    public Task WriteLineAsync(string output)
     {
-        _console.Write(output);
+        _console.WriteLine(output);
         return Task.CompletedTask;
     }
 }

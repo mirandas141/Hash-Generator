@@ -1,4 +1,5 @@
 ﻿using HashGenerator.DataAccess;
+using HashGenerator.Models;
 using McMaster.Extensions.CommandLineUtils;
 using System.Reflection;
 
@@ -20,15 +21,16 @@ public class Startup
 
     internal async Task OnExecuteAsync()
     {
+        if (Silent && string.IsNullOrWhiteSpace(Target))
+            throw new NoOutputEnabledException();
+
         while (string.IsNullOrWhiteSpace(Source))
         {
             Source = Prompt.GetString("Please enter the path: ").Trim();
         }
 
-        var generator = HashGenerator.Create(HashType)
-            .UseRelativePaths(!FullPaths);
-
-        var output = new TextOutput(GetWritters());
+        var generator = HashGenerator.Create(HashType);
+        var output = new TextOutput(GetWritters(Source), GetFormatter(Source));
         var app = new Application(generator, output);
         await app.RunAsync(Source);
 
@@ -40,7 +42,7 @@ public class Startup
         }
     }
 
-    private List<IOutputTextWriter> GetWritters()
+    private List<IOutputTextWriter> GetWritters(string source)
     {
         var writers = new List<IOutputTextWriter>();
         if (!Silent)
@@ -51,13 +53,20 @@ public class Startup
         {
             if (Target.Equals(".", StringComparison.InvariantCultureIgnoreCase))
             {
-                Target = $"{Source}.{HashType}";
+                Target = $"{source}.{HashType}";
             }
             var file = new FileWriter(Target);
             writers.Add(file);
         }
 
         return writers;
+    }
+
+    private INameFormatter GetFormatter(string source)
+    {
+        return FullPaths
+            ? new FullPathNameFormatter()
+            : new RelativePathNameFormatter(source);
     }
 
     internal string GetVersion()
@@ -75,8 +84,8 @@ public class Startup
         "Note: MD5 and SHA1 are weaker hashing algorithms and not recommended.")]
     [AllowedValues("sha256", "sha384", "sha512", "md5", "sha1",
         IgnoreCase = true,
-        Comparer = StringComparison.InvariantCultureIgnoreCase,
-        ErrorMessage = "Supported types are ")]
+        Comparer = StringComparison.InvariantCultureIgnoreCase
+        /*ErrorMessage = "Supported types are "*/)]
     public string HashType { get; set; } = "sha256";
 
     [Option(Description = "Target file to write hashes too\n" +

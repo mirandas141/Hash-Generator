@@ -2,5 +2,5 @@
 
 public interface IOutputTextWriter
 {
-    Task Write(string output);
+    Task WriteLineAsync(string output);
 }

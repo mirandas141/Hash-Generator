@@ -9,12 +9,15 @@ public class FileWriter : IOutputTextWriter
         _target = target;
     }
 
-    public async Task Write(string output)
+    public async Task WriteLineAsync(string output)
     {
         var parent = Directory.GetParent(_target);
         if (!parent.Exists)
             parent.Create();
 
-        await File.WriteAllTextAsync(_target, output);
+        if (!output.EndsWith(Environment.NewLine))
+            output += Environment.NewLine;
+
+        await File.AppendAllTextAsync(_target, output);
     }
 }
