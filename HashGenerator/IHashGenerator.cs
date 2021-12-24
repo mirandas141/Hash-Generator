@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-
-namespace HashGenerator
+﻿namespace HashGenerator
 {
     public interface IHashGenerator
     {

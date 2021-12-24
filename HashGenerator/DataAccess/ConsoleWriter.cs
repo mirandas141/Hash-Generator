@@ -1,5 +1,4 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
-using System.Threading.Tasks;
 
 namespace HashGenerator.DataAccess
 {
@@ -12,9 +11,10 @@ namespace HashGenerator.DataAccess
             _console = console;
         }
 
-        public async Task Write(string output)
+        public Task Write(string output)
         {
             _console.Write(output);
+            return Task.CompletedTask;
         }
     }
 }
