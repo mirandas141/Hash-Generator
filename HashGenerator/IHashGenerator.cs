@@ -1,8 +1,7 @@
-﻿namespace HashGenerator
+﻿namespace HashGenerator;
+
+public interface IHashGenerator
 {
-    public interface IHashGenerator
-    {
-        Task<List<HashPair>> FromDirectoryAsync(string directory, string pattern = "*");
-        Task<HashPair> FromFileAsync(string target);
-    }
+    Task<List<HashPair>> FromDirectoryAsync(string directory, string pattern = "*");
+    Task<HashPair> FromFileAsync(string target);
 }

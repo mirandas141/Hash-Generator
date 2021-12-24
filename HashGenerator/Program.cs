@@ -2,30 +2,29 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace HashGenerator
-{
-    class Program
-    {
-        public static async Task Main(string[] args)
-        {
-            try
-            {
-                await Host.CreateDefaultBuilder()
-                    .ConfigureServices((context, services) =>
-                    {
-                        ConfigureServices(services);
-                    })
-                    .RunCommandLineApplicationAsync<Startup>(args);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
-        }
+namespace HashGenerator;
 
-        private static void ConfigureServices(IServiceCollection services)
+class Program
+{
+    public static async Task Main(string[] args)
+    {
+        try
         {
-            services.AddSingleton(PhysicalConsole.Singleton);
+            await Host.CreateDefaultBuilder()
+                .ConfigureServices((context, services) =>
+                {
+                    ConfigureServices(services);
+                })
+                .RunCommandLineApplicationAsync<Startup>(args);
         }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+        }
+    }
+
+    private static void ConfigureServices(IServiceCollection services)
+    {
+        services.AddSingleton(PhysicalConsole.Singleton);
     }
 }

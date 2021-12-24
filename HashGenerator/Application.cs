@@ -1,66 +1,65 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
 
-namespace HashGenerator
+namespace HashGenerator;
+
+public class Application
 {
-    public class Application
+    private readonly IHashGenerator _hashGenerator;
+    private readonly IConsole _console;
+    private readonly IOutput _output;
+
+    public Application(IHashGenerator hashGenerator, IConsole console, IOutput output)
     {
-        private readonly IHashGenerator _hashGenerator;
-        private readonly IConsole _console;
-        private readonly IOutput _output;
+        _hashGenerator = hashGenerator;
+        _console = console;
+        _output = output;
+    }
 
-        public Application(IHashGenerator hashGenerator, IConsole console, IOutput output)
+    public async Task RunAsync(string source)
+    {
+        var hashes = await ComputeHashes(source);
+
+        OutputResults(hashes);
+    }
+
+    private async Task<List<HashPair>> ComputeHashes(string source)
+    {
+        var hashes = new List<HashPair>();
+        source = source.Replace("\"", "").Replace("\'", "");
+
+        if (File.Exists(source))
         {
-            _hashGenerator = hashGenerator;
-            _console = console;
-            _output = output;
+            hashes.Add(await _hashGenerator.FromFileAsync(source));
         }
-
-        public async Task RunAsync(string source)
+        else if (Directory.Exists(source))
         {
-            var hashes = await ComputeHashes(source);
-
-            OutputResults(hashes);
+            hashes.AddRange(await _hashGenerator.FromDirectoryAsync(source));
         }
-
-        private async Task<List<HashPair>> ComputeHashes(string source)
+        else if (source.Contains("*") || source.Contains("?"))
         {
-            var hashes = new List<HashPair>();
-            source = source.Replace("\"", "").Replace("\'", "");
-
-            if (File.Exists(source))
+            if (source.Contains(Path.DirectorySeparatorChar))
             {
-                hashes.Add(await _hashGenerator.FromFileAsync(source));
-            }
-            else if (Directory.Exists(source))
-            {
-                hashes.AddRange(await _hashGenerator.FromDirectoryAsync(source));
-            }
-            else if (source.Contains("*") || source.Contains("?"))
-            {
-                if (source.Contains(Path.DirectorySeparatorChar))
-                {
-                    var dir = Path.GetDirectoryName(source);
-                    var pattern = source
-                        .Replace(dir, string.Empty)
-                        .Replace(Path.DirectorySeparatorChar.ToString(), string.Empty);
-                    hashes.AddRange(await _hashGenerator.FromDirectoryAsync(dir, pattern));
-                }
-                else
-                {
-                    hashes.AddRange(await _hashGenerator.FromDirectoryAsync(Directory.GetCurrentDirectory(), source));
-                }
+                var dir = Path.GetDirectoryName(source);
+                var pattern = source
+                    .Replace(dir, string.Empty)
+                    .Replace(Path.DirectorySeparatorChar.ToString(), string.Empty);
+                hashes.AddRange(await _hashGenerator.FromDirectoryAsync(dir, pattern));
             }
             else
             {
-                _console.WriteLine("Source not found");
-                Environment.Exit(-1);
+                hashes.AddRange(await _hashGenerator.FromDirectoryAsync(Directory.GetCurrentDirectory(), source));
             }
-            return hashes;
         }
-
-        private void OutputResults(List<HashPair> hashes)
+        else
         {
-            _output.Write(hashes);
+            _console.WriteLine("Source not found");
+            Environment.Exit(-1);
         }
+        return hashes;
+    }
+
+    private void OutputResults(List<HashPair> hashes)
+    {
+        _output.Write(hashes);
     }
 }

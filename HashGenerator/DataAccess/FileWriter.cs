@@ -1,21 +1,20 @@
-﻿namespace HashGenerator.DataAccess
+﻿namespace HashGenerator.DataAccess;
+
+public class FileWriter : IOutputTextWriter
 {
-    public class FileWriter : IOutputTextWriter
+    private readonly string _target;
+
+    public FileWriter(string target)
     {
-        private readonly string _target;
+        _target = target;
+    }
 
-        public FileWriter(string target)
-        {
-            _target = target;
-        }
+    public async Task Write(string output)
+    {
+        var parent = Directory.GetParent(_target);
+        if (!parent.Exists)
+            parent.Create();
 
-        public async Task Write(string output)
-        {
-            var parent = Directory.GetParent(_target);
-            if (!parent.Exists)
-                parent.Create();
-
-            await File.WriteAllTextAsync(_target, output);
-        }
+        await File.WriteAllTextAsync(_target, output);
     }
 }

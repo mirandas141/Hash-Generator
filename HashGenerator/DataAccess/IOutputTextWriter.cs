@@ -1,7 +1,6 @@
-﻿namespace HashGenerator.DataAccess
+﻿namespace HashGenerator.DataAccess;
+
+public interface IOutputTextWriter
 {
-    public interface IOutputTextWriter
-    {
-        Task Write(string output);
-    }
+    Task Write(string output);
 }
