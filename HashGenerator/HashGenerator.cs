@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -12,9 +13,23 @@ namespace HashGenerator
         private readonly HashAlgorithm _hasher;
         private string _pathToTrim = "";
 
-        public HashGenerator(HashAlgorithm hasher)
+        private HashGenerator(HashAlgorithm hasher)
         {
             _hasher = hasher;
+        }
+
+        public static HashGenerator Create(string hashType)
+        {
+            if (string.IsNullOrEmpty(hashType)) throw new ArgumentNullException(nameof(hashType));
+
+            var crypto = HashAlgorithm.Create(hashType);
+            return new HashGenerator(crypto);
+        }
+
+        public HashGenerator UseRelativePaths(bool useRelative)
+        {
+            RelativePaths = useRelative;
+            return this;
         }
 
         public bool RelativePaths { get; set; }

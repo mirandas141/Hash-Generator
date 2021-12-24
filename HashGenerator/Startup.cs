@@ -3,7 +3,6 @@ using McMaster.Extensions.CommandLineUtils;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace HashGenerator
@@ -12,7 +11,7 @@ namespace HashGenerator
         FullName = "Hash Generator",
         Description = "A simple utility to generate hashes from a file or directory of files")]
     [VersionOptionFromMember(MemberName = "GetVersion")]
-    [HelpOption]
+    [HelpOption(ShortName = "")] //Hide the default -h parameter as it conflicts with HashType (-h) below
     public class Startup
     {
         private readonly IConsole _console;
@@ -22,21 +21,31 @@ namespace HashGenerator
             _console = console;
         }
 
-#pragma warning disable IDE0051 // Remove unused private members
-        private async Task OnExecuteAsync()
-#pragma warning restore IDE0051 // Remove unused private members
+        internal async Task OnExecuteAsync()
         {
             while (string.IsNullOrWhiteSpace(Source))
             {
                 Source = Prompt.GetString("Please enter the path: ").Trim();
             }
 
-            var hasher = GetHashAlgorithm(HashType);
-            var generator = new HashGenerator(hasher)
-            {
-                RelativePaths = !FullPaths
-            };
+            var generator = HashGenerator.Create(HashType)
+                .UseRelativePaths(!FullPaths);
+            var writers = GetWritters();
 
+            IOutput output = new TextOutput(writers);
+            var app = new Application(generator, _console, output);
+            await app.RunAsync(Source);
+
+            if (PauseOnCompletion)
+            {
+                _console.Write("Press any key to continue: ");
+                var reader = _console.In;
+                reader.Read();
+            }
+        }
+
+        private List<IOutputTextWriter> GetWritters()
+        {
             var writers = new List<IOutputTextWriter>();
             if (!Silent)
             {
@@ -52,33 +61,10 @@ namespace HashGenerator
                 writers.Add(file);
             }
 
-            IOutput output = new TextOutput(writers);
-            var app = new Application(generator, _console, output);
-            await app.RunAsync(Source);
-
-            if (PauseOnCompletion)
-            {
-                _console.Write("Press any key to continue: ");
-                var reader = _console.In;
-                reader.Read();
-            }
+            return writers;
         }
 
-        private HashAlgorithm GetHashAlgorithm(string hashType)
-        {
-            return (hashType.ToLowerInvariant().Trim()) switch
-            {
-                "sha384" => SHA384.Create(),
-                "sha512" => SHA512.Create(),
-                "md5" => MD5.Create(),
-                "sha1" => SHA1.Create(),
-                _ => SHA256.Create()
-            };
-        }
-
-#pragma warning disable IDE0051 // Remove unused private members
-        private string GetVersion()
-#pragma warning restore IDE0051 // Remove unused private members
+        internal string GetVersion()
             => typeof(Startup)
             .Assembly?
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
